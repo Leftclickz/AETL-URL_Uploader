@@ -1,24 +1,45 @@
 #include <conio.h>
+#include <filesystem>
 #include <iostream>
 
 #include "LogFile.h"
 #include "Helpers.h"
 #include "sqllite/sqlite3.h"
+#include "Settings.h"
+//#include "curl.h"
 
 using namespace std;
-
+namespace fs = std::filesystem;
 
 volatile bool IsRunning = true;
 static sqlite3* OUR_DATABASE;
+//static CURL* OUR_CURL_HANDLE;
 
 //Listen for a character input to exit
 void ListenForExit();
+void Update();
 
-int main()
+int main(int argc, char* argv[])
 {
-	return 0;
-
 	LogFile::BeginLogging();
+
+	for (int i = 0; i < argc; i++)
+	{
+		string val = string(argv[i]);
+
+		if (val == "-folder")
+		{
+			if (i + 1 >= argc)
+			{
+				cout << "Invalid folder setting. -folder requires a string input." << endl;
+				return 0;
+			}
+
+			Settings::HotFolder = fs::absolute(string(argv[i + 1])).string();
+		}
+	}
+
+
 
 #if (_DEBUG)
 	std::thread InputListener(ListenForExit);
@@ -27,9 +48,11 @@ int main()
 	InputListener->detach();
 #endif
 
+	//OUR_CURL_HANDLE = curl_easy_init();
 
 	while (IsRunning)
-	{
+	{		
+		Update();
 		SLEEP(SECOND * 60 * 60);
 	}
 
@@ -57,5 +80,26 @@ void ListenForExit()
 			IsRunning = false;
 			break;
 		}
+	}
+}
+
+
+void Update()
+{
+	fs::directory_iterator hotFolderIterator = fs::directory_iterator(Settings::HotFolder);
+
+	for (auto i : hotFolderIterator)
+	{
+		cout << "Searching path - " << i.path().string() << endl;
+
+		fs::directory_iterator subFolder = fs::directory_iterator(i.path());
+
+		for (auto entry : subFolder)
+		{
+			UploadUsingCurl(entry.path());
+		}
+
+
+		cout << endl;
 	}
 }
