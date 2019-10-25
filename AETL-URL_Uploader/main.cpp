@@ -6,14 +6,12 @@
 #include "Helpers.h"
 #include "sqllite/sqlite3.h"
 #include "Settings.h"
-//#include "curl.h"
 
 using namespace std;
 namespace fs = std::filesystem;
 
 volatile bool IsRunning = true;
 static sqlite3* OUR_DATABASE;
-//static CURL* OUR_CURL_HANDLE;
 
 //Listen for a character input to exit
 void ListenForExit();
@@ -37,6 +35,16 @@ int main(int argc, char* argv[])
 
 			Settings::HotFolder = fs::absolute(string(argv[i + 1])).string();
 		}
+
+		if (val == "-testing")
+		{
+			Settings::Version = RunVersion::TESTING;
+		}
+
+		if (val == "-runonce")
+		{
+			Settings::Length = RunLength::RUN_ONCE;
+		}
 	}
 
 
@@ -51,11 +59,19 @@ int main(int argc, char* argv[])
 	//OUR_CURL_HANDLE = curl_easy_init();
 
 	while (IsRunning)
-	{		
+	{
 		Update();
-		SLEEP(SECOND * 60 * 60);
-	}
 
+		//Sleep for a cycle until the next loop or exit if we're doing a runonce
+		if (Settings::Length != RunLength::RUN_ONCE)
+		{
+			SLEEP(SECOND * 60 * 60);
+		}
+		else
+		{
+			IsRunning = false;
+		}
+	}
 
 #if (!_DEBUG)
 	delete InputListener;

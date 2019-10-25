@@ -64,7 +64,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="Settings.h">
       <Filter>Header Files</Filter>
     </None>
