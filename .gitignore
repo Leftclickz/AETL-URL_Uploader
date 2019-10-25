@@ -31,3 +31,4 @@
 *.out
 *.app
 /AETL-URL_Uploader/.vs/AETL-URL_Uploader/v16
+/AETL-URL_Uploader/Logs

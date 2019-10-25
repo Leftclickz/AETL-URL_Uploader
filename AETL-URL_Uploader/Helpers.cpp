@@ -2,6 +2,7 @@
 #include "kguithread.h"
 #include "Settings.h"
 #include "sqllite/SQL_Helpers.h"
+#include "LogFile.h"
 #include <windows.h>
 #include <string>
 
@@ -62,8 +63,6 @@ void UploadUsingCurl(std::filesystem::path Filepath)
 	}
 
 	string nameWithoutProjectID = name.substr(name.find("-") + 1);
-
-	
 	string locationID = "";
 	
 	//Get params based on filename being monthly or not
@@ -116,30 +115,37 @@ void UploadUsingCurl(std::filesystem::path Filepath)
 	}
 
 	cout << "Uploading file - " << Filepath << endl;
+	LogFile::WriteToLog("Uploading file - " + Filepath.string());
 
 	//------------- EXECUTION BEGIN ---------------
 
 	//convert to wide format and execute the command
 	wstring executeString(command.begin(), command.end());
+	LogFile::WriteToLog("Executing command : " + absCurlPath);
 	CStringA res = ExecCmd(executeString.c_str());
+	LogFile::WriteToLog("Response: " + string(res.GetString()));
 
 	//Check if return code was a success or not
 	if (res.Find(CLEAN_RESPONSE_CODE) == ERROR_BAD_HTTP_RESPONSE)
 	{
 		cout << "Upload failed. Full response: "  + res << endl;
+		LogFile::WriteToLog("Upload FAILED.");
 	}
 	else
 	{
 		cout << "Upload successful." << endl;
+		LogFile::WriteToLog("Upload successful.");
 
 		//remove the file since we successfully uploaded it
 		if (remove(fullFilepath.c_str()) == 0)
 		{
-			cout << params.File + ": successfully deleted from system.";
+			cout << fullFilepath + ": successfully deleted from system.";
+			LogFile::WriteToLog(fullFilepath + ": successfully deleted from system.");
 		}
 		else
 		{
-			cout << params.File + ": failed to delete from system.";
+			cout << fullFilepath + ": failed to delete from system.";
+			LogFile::WriteToLog(fullFilepath + ": failed to delete from system.");
 		}
 	}
 	//------------- EXECUTION END --------------------
